@@ -7,6 +7,10 @@ export default class Slide {
       startX: 0,
       movement: 0,
     };
+    this.touchEvents = [
+      ['mousedown', 'touchstart'],
+      ['mouseup', 'touchend'],
+    ];
   }
 
   moveSlide(distX) {
@@ -15,32 +19,45 @@ export default class Slide {
   }
 
   updatePosition(clientX) {
-    this.dist.movement = Math.floor((this.dist.startX - clientX) * 1.3);
-    console.log(this.dist.movement);
+    this.dist.movement = (this.dist.startX - clientX) * 1.3;
     return this.dist.finalPosition - this.dist.movement;
   }
 
   onStart(event) {
-    event.preventDefault();
-    this.dist.startX = event.clientX;
-    console.log(this.dist.startX);
-    this.wrapper.addEventListener('mousemove', this.onMove);
+    let movetype;
+    if (event.type === 'mousedown') {
+      event.preventDefault();
+      this.dist.startX = event.clientX;
+      movetype = 'mousemove';
+    } else {
+      this.dist.startX = event.changedTouches[0].clientX;
+      movetype = 'touchmove';
+    }
+    this.wrapper.addEventListener(movetype, this.onMove);
   }
 
   onMove(event) {
-    const finalPosition = this.updatePosition(event.clientX);
+    const pointerPosition =
+      event.type === 'mousemove'
+        ? event.clientX
+        : event.changedTouches[0].clientX;
+    const finalPosition = this.updatePosition(pointerPosition);
     this.moveSlide(finalPosition);
   }
 
   onEnd() {
-    console.log('acabou');
-    this.wrapper.removeEventListener('mousemove', this.onMove);
+    const movetype = event.type === 'mouseup' ? 'mousemove' : 'touchmove';
+    this.wrapper.removeEventListener(movetype, this.onMove);
     this.dist.finalPosition = this.dist.movePosition;
   }
 
   addSlideEvents() {
-    this.wrapper.addEventListener('mousedown', this.onStart);
-    this.wrapper.addEventListener('mouseup', this.onEnd);
+    this.touchEvents[0].forEach((event) =>
+      this.wrapper.addEventListener(event, this.onStart)
+    );
+    this.touchEvents[1].forEach((event) =>
+      this.wrapper.addEventListener(event, this.onEnd)
+    );
   }
 
   bindEvents() {
